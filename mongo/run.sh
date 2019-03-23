@@ -29,8 +29,8 @@ let databases = '$INITIALIZATION_DATABASES'.split(',')
 databases.forEach(database => {
   let dev = db.getSiblingDB(database)
   dev.createUser({
-    user: '$GS_USER_NAME',
-    pwd: '$GS_USER_PWD',
+    user: '$USER_NAME',
+    pwd: '$USER_PWD',
     roles: [
       {
         role: 'root',
