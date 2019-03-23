@@ -1,0 +1,56 @@
+version: '3.6'
+
+networks:
+  mongo-network:
+
+services:
+  # Mongo Replica-Set Setup
+  mongo-rs0:
+    image: mongo:3.6.11-stretch
+    hostname: mongo-rs0
+    container_name: mongo-rs0
+    networks:
+      - mongo-network
+    volumes:
+      - ./mongo/mongodb.conf:/etc/mongo/mongod.conf:ro
+      - ./mongo/run.sh:/scripts/2-run.sh:ro
+      - ./mongo/data/rs0:/data/db
+    ports:
+      - 27017:27017
+    env_file: .env
+    command: mongod --replSet "${REPLICA_SET}"
+
+  mongo-rs1:
+    image: mongo:3.6.11-stretch
+    hostname: mongo-rs1
+    container_name: mongo-rs1
+    networks:
+      - mongo-network
+    volumes:
+      - ./mongo/mongodb.conf:/etc/mongo/mongod.conf:ro
+      - ./mongo/data/rs1:/data/db
+    ports:
+      - 27018:27017
+    env_file: .env
+    command: mongod --replSet "${REPLICA_SET}"
+
+  mongo-setup:
+    image: mongo:3.6.11-stretch
+    depends_on:
+      - mongo-rs0
+      - mongo-rs1
+    tty: true
+    healthcheck:
+      disable: true
+    networks:
+      - mongo-network
+    volumes:
+      - ./mongo/run.sh:/scripts/2-run.sh
+      - ./mongo/wait:/scripts/wait
+    command: ["chmod", "+x", "/scripts/2-run.sh"]
+    entrypoint:
+      - sh
+      - /scripts/2-run.sh
+    env_file: .env
+    environment:
+      WAIT_HOSTS: mongo-rs0:27017, mongo-rs1:27017
